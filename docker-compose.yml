@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: glpi-matrix-notifier  # Custom container name
     environment:
       GLPI_API_URL: "https://your-glpi-instance.com/apirest.php"
       GLPI_USERNAME: "your_username"
