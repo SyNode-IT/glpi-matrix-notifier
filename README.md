@@ -18,7 +18,7 @@ A Python-based project to monitor new tickets in GLPI and send notifications to 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/glpi-matrix-notifier.git
+git clone https://github.com/SyNode-IT/glpi-matrix-notifier.git
 cd glpi-matrix-notifier
 ```
 
