@@ -127,7 +127,7 @@ async def monitor_glpi_tickets():
                 for ticket_id in new_tickets:
                     ticket_info = next((t for t in tickets if t['id'] == ticket_id), None)
                     if ticket_info:
-                        message = f"🆕 New ticket created: {ticket_info.get('name', 'No name')} (ID: {ticket_id})"
+                        message = f"🆕  ticket created: {ticket_info.get('name', 'No name')} (ID: {ticket_id})"
                         await send_matrix_message(message)
 
                 previous_tickets = current_tickets
