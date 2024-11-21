@@ -4,13 +4,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: glpi-matrix-notifier  # Custom container name
+    container_name: glpi-matrix-notifier
     environment:
-      GLPI_API_URL: "https://your-glpi-instance.com/apirest.php"
-      GLPI_USERNAME: "your_username"
-      GLPI_PASSWORD: "your_password"
-      GLPI_APP_TOKEN: "your_app_token"
-      MATRIX_HOMESERVER: "https://your-matrix-server.com"
-      MATRIX_TOKEN: "your_matrix_token"
-      ROOM_ID: "!your_room_id:matrix.org"
+      GLPI_API_URL: "${GLPI_API_URL}"
+      GLPI_USERNAME: "${GLPI_USERNAME}"
+      GLPI_PASSWORD: "${GLPI_PASSWORD}"
+      GLPI_APP_TOKEN: "${GLPI_APP_TOKEN}"
+      MATRIX_HOMESERVER: "${MATRIX_HOMESERVER}"
+      MATRIX_TOKEN: "${MATRIX_TOKEN}"
+      ROOM_ID: "${ROOM_ID}"
     restart: unless-stopped
