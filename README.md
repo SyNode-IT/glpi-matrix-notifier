@@ -27,13 +27,17 @@ cd glpi-matrix-notifier
 Create a `.env` file in the project root with the following keys:
 
 ```
-GLPI_API_URL=https://your-glpi-instance.com/apirest.php
-GLPI_USERNAME=your_username
-GLPI_PASSWORD=your_password
-GLPI_APP_TOKEN=your_app_token
-MATRIX_HOMESERVER=https://your-matrix-server.com
-MATRIX_TOKEN=your_matrix_token
-ROOM_ID=!your_room_id:matrix.org
+### Configuration GLPI
+GLPI_API_URL = "https://your-glpi-instance.tld/apirest.php"
+GLPI_USERNAME = "glpi_username"
+GLPI_PASSWORD = "glpi_password"
+GLPI_APP_TOKEN = "tokentokentokentokentoken"
+### Configuration MATRIX
+MATRIX_HOMESERVER = "https://your-matrix-server.com"
+MATRIX_TOKEN = "tokentokentokentokentoken"
+ROOM_ID = "!your_room_id:your_matrix.tld"
+### Message
+MESSAGE="[CLIENT] 🆕 Ticket :"
 ```
 
 ### 3. Build and Run

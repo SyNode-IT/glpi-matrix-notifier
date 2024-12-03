@@ -13,4 +13,5 @@ services:
       MATRIX_HOMESERVER: "${MATRIX_HOMESERVER}"
       MATRIX_TOKEN: "${MATRIX_TOKEN}"
       ROOM_ID: "${ROOM_ID}"
+      MESSAGE: "${MESSAGE}"
     restart: unless-stopped

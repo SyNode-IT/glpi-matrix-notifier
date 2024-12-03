@@ -15,6 +15,8 @@ GLPI_APP_TOKEN = os.getenv("GLPI_APP_TOKEN")  # GLPI application token
 MATRIX_HOMESERVER = os.getenv("MATRIX_HOMESERVER")  # Matrix homeserver URL
 MATRIX_TOKEN = os.getenv("MATRIX_TOKEN")  # Matrix user access token
 ROOM_ID = os.getenv("ROOM_ID")  # Matrix room ID for notifications
+# Configuration from environment variable MESSAGE
+MESSAGE = os.getenv("MESSAGE")  # Start of Message content
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -61,7 +63,7 @@ def fetch_glpi_tickets(session_token):
         headers = {
             "Session-Token": session_token,
             "Content-Type": "application/json",
-            "App-Token": GLPI_APP_TOKEN  # Add the App-Token
+            "App-Token": GLPI_APP_TOKEN
         }
         response = requests.get(f"{GLPI_API_URL}/Ticket", headers=headers)
         
@@ -127,7 +129,7 @@ async def monitor_glpi_tickets():
                 for ticket_id in new_tickets:
                     ticket_info = next((t for t in tickets if t['id'] == ticket_id), None)
                     if ticket_info:
-                        message = f"🆕 ticket created: {ticket_info.get('name', 'No name')} (ID: {ticket_id})"
+                        message = f"{MESSAGE} {ticket_info.get('name', 'No name')} (ID: {ticket_id})"
                         await send_matrix_message(message)
 
                 previous_tickets = current_tickets
