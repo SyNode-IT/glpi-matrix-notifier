@@ -67,7 +67,7 @@ def fetch_glpi_tickets(session_token):
         }
         response = requests.get(f"{GLPI_API_URL}/Ticket", headers=headers)
         
-        if response.status_code == 200:
+        if response.status_code in (200, 206):
             # If the response is a list, return it directly
             if isinstance(response.json(), list):
                 tickets = response.json()
