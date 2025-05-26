@@ -24,7 +24,7 @@ cd glpi-matrix-notifier
 
 ### 2. Configure Environment Variables
 
-Edit docker-compose.yml and set your 'container_name: NAME_CONTAINER'
+Edit `docker-compose.yml` and set your 'container_name: NAME_CONTAINER'
 
 Create a `.env` file in the project root with the following keys:
 
