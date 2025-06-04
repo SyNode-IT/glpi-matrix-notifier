@@ -57,28 +57,31 @@ def kill_glpi_session(session_token):
     except Exception as e:
         logger.error(f"Error terminating session: {e}")
 
-# Fetch tickets from GLPI
-def fetch_glpi_tickets(session_token):
+# Fetch tickets from GLPI asynchronously
+async def fetch_glpi_tickets(session_token):
     try:
         headers = {
             "Session-Token": session_token,
             "Content-Type": "application/json",
-            "App-Token": GLPI_APP_TOKEN
+            "App-Token": GLPI_APP_TOKEN,
         }
-        response = requests.get(f"{GLPI_API_URL}/Ticket", headers=headers)
-        
-        if response.status_code in (200, 206):
-            # If the response is a list, return it directly
-            if isinstance(response.json(), list):
-                tickets = response.json()
-            else:
-                tickets = response.json().get("data", [])
-                
-            logger.info(f"Retrieved {len(tickets)} tickets from GLPI")
-            return tickets
-        else:
-            logger.error(f"Error fetching tickets: {response.status_code}, {response.text}")
-            return []
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{GLPI_API_URL}/Ticket", headers=headers) as response:
+                if response.status in (200, 206):
+                    data = await response.json()
+                    if isinstance(data, list):
+                        tickets = data
+                    else:
+                        tickets = data.get("data", [])
+
+                    logger.info(f"Retrieved {len(tickets)} tickets from GLPI")
+                    return tickets
+                else:
+                    error_text = await response.text()
+                    logger.error(
+                        f"Error fetching tickets: {response.status}, {error_text}"
+                    )
+                    return []
     except Exception as e:
         logger.error(f"Error fetching tickets: {e}")
         return []
@@ -120,7 +123,7 @@ async def monitor_glpi_tickets():
     previous_tickets = set()
     try:
         while True:
-            tickets = fetch_glpi_tickets(session_token)
+            tickets = await fetch_glpi_tickets(session_token)
             if tickets:
                 current_tickets = set(ticket['id'] for ticket in tickets)
 
