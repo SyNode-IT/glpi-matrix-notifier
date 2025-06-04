@@ -30,14 +30,14 @@ Create a `.env` file in the project root with the following keys:
 
 ```
 ### Configuration GLPI
-GLPI_API_URL = "https://your-glpi-instance.tld/apirest.php"
-GLPI_USERNAME = "glpi_username"
-GLPI_PASSWORD = "glpi_password"
-GLPI_APP_TOKEN = "tokentokentokentokentoken"
+GLPI_API_URL="https://your-glpi-instance.tld/apirest.php"
+GLPI_USERNAME="glpi_username"
+GLPI_PASSWORD="glpi_password"
+GLPI_APP_TOKEN="tokentokentokentokentoken"
 ### Configuration MATRIX
-MATRIX_HOMESERVER = "https://your-matrix-server.com"
-MATRIX_TOKEN = "tokentokentokentokentoken"
-ROOM_ID = "!your_room_id:your_matrix.tld"
+MATRIX_HOMESERVER="https://your-matrix-server.com"
+MATRIX_TOKEN="tokentokentokentokentoken"
+ROOM_ID="!your_room_id:your_matrix.tld"
 ### Message
 MESSAGE="[CLIENT] 🆕 Ticket :"
 ```
