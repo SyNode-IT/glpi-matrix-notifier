@@ -1,0 +1,26 @@
+{
+  "$schema": "../app-info-schema.json",
+  "name": "GLPI Matrix Notifier",
+  "available": true,
+  "exposable": false,
+  "dynamic_config": true,
+  "id": "glpi-matrix-notifier",
+  "tipi_version": 20,
+  "version": "1.0.0",
+  "categories": ["utilities"],
+  "description": "Send GLPI ticket notifications to a Matrix room.",
+  "short_desc": "Notify Matrix on new GLPI tickets",
+  "author": "SyNode IT",
+  "source": "https://github.com/SyNode-IT/glpi-matrix-notifier",
+  "form_fields": [
+    {"type": "text", "label": "GLPI API URL", "env_variable": "GLPI_API_URL"},
+    {"type": "text", "label": "GLPI Username", "env_variable": "GLPI_USERNAME"},
+    {"type": "password", "label": "GLPI Password", "env_variable": "GLPI_PASSWORD"},
+    {"type": "text", "label": "GLPI App Token", "env_variable": "GLPI_APP_TOKEN"},
+    {"type": "text", "label": "Matrix Homeserver", "env_variable": "MATRIX_HOMESERVER"},
+    {"type": "text", "label": "Matrix Access Token", "env_variable": "MATRIX_TOKEN"},
+    {"type": "text", "label": "Room ID", "env_variable": "ROOM_ID"},
+    {"type": "text", "label": "Message", "env_variable": "MESSAGE"}
+  ],
+  "supported_architectures": ["arm64", "amd64"]
+}

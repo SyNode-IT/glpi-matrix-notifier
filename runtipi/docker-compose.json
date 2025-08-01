@@ -1,0 +1,23 @@
+{
+  "$schema": "../dynamic-compose-schema.json",
+  "services": [
+    {
+      "name": "glpi-matrix-notifier",
+      "build": {
+        "context": "..",
+        "dockerfile": "Dockerfile"
+      },
+      "environment": {
+        "GLPI_API_URL": "${GLPI_API_URL}",
+        "GLPI_USERNAME": "${GLPI_USERNAME}",
+        "GLPI_PASSWORD": "${GLPI_PASSWORD}",
+        "GLPI_APP_TOKEN": "${GLPI_APP_TOKEN}",
+        "MATRIX_HOMESERVER": "${MATRIX_HOMESERVER}",
+        "MATRIX_TOKEN": "${MATRIX_TOKEN}",
+        "ROOM_ID": "${ROOM_ID}",
+        "MESSAGE": "${MESSAGE}"
+      },
+      "isMain": true
+    }
+  ]
+}
