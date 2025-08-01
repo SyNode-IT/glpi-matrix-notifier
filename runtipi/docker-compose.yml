@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  glpi-matrix-notifier:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: glpi-matrix-notifier
+    environment:
+      GLPI_API_URL: "${GLPI_API_URL}"
+      GLPI_USERNAME: "${GLPI_USERNAME}"
+      GLPI_PASSWORD: "${GLPI_PASSWORD}"
+      GLPI_APP_TOKEN: "${GLPI_APP_TOKEN}"
+      MATRIX_HOMESERVER: "${MATRIX_HOMESERVER}"
+      MATRIX_TOKEN: "${MATRIX_TOKEN}"
+      ROOM_ID: "${ROOM_ID}"
+      MESSAGE: "${MESSAGE}"
+    restart: unless-stopped

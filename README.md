@@ -24,8 +24,6 @@ cd glpi-matrix-notifier
 
 ### 2. Configure Environment Variables
 
-Edit `docker-compose.yml` and set your 'container_name: NAME_CONTAINER'
-
 Create a `.env` file in the project root with the following keys:
 
 ```
@@ -57,6 +55,26 @@ View the application logs:
 ```bash
 docker-compose logs -f
 ```
+
+## Runtipi Integration
+
+This repository includes a minimal set of files to run the notifier as a
+Runtipi application. Clone the repository (or copy its files) inside the `apps`
+folder of your Runtipi installation and install it using the `runtipi-cli` tool:
+
+```bash
+sudo git clone https://github.com/SyNode-IT/glpi-matrix-notifier.git \
+    /opt/runtipi/apps/glpi-matrix-notifier
+cd /opt/runtipi/apps/glpi-matrix-notifier
+sudo cp -r runtipi/* .
+cd /opt/runtipi
+sudo ./runtipi-cli app install glpi-matrix-notifier
+```
+
+After installation, configure the environment variables from Tipi's interface
+(Apps → Manage) or by editing
+`/opt/runtipi/apps/glpi-matrix-notifier/config.json`, as explained in the
+[official documentation](https://runtipi.io/docs/guides/customize-app-config).
 
 ## License
 
