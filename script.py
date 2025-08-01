@@ -5,22 +5,35 @@ import requests
 import asyncio
 import logging
 import aiohttp
+import signal
+import sys
 
 # Configuration from environment variables GLPI
-GLPI_API_URL = os.getenv("GLPI_API_URL")  # GLPI API base URL
-GLPI_USERNAME = os.getenv("GLPI_USERNAME")  # GLPI username
-GLPI_PASSWORD = os.getenv("GLPI_PASSWORD")  # GLPI password
-GLPI_APP_TOKEN = os.getenv("GLPI_APP_TOKEN")  # GLPI application token
-# Configuration from environment variables MATRIX
-MATRIX_HOMESERVER = os.getenv("MATRIX_HOMESERVER")  # Matrix homeserver URL
-MATRIX_TOKEN = os.getenv("MATRIX_TOKEN")  # Matrix user access token
-ROOM_ID = os.getenv("ROOM_ID")  # Matrix room ID for notifications
-# Configuration from environment variable MESSAGE
-MESSAGE = os.getenv("MESSAGE")  # Start of Message content
+GLPI_API_URL = os.getenv("GLPI_API_URL")
+GLPI_USERNAME = os.getenv("GLPI_USERNAME")
+GLPI_PASSWORD = os.getenv("GLPI_PASSWORD")
+GLPI_APP_TOKEN = os.getenv("GLPI_APP_TOKEN")
+# MATRIX
+MATRIX_HOMESERVER = os.getenv("MATRIX_HOMESERVER")
+MATRIX_TOKEN = os.getenv("MATRIX_TOKEN")
+ROOM_ID = os.getenv("ROOM_ID")
+MESSAGE = os.getenv("MESSAGE")
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def check_env():
+    missing = []
+    for var in [
+        "GLPI_API_URL", "GLPI_USERNAME", "GLPI_PASSWORD", "GLPI_APP_TOKEN",
+        "MATRIX_HOMESERVER", "MATRIX_TOKEN", "ROOM_ID", "MESSAGE"
+    ]:
+        if not os.getenv(var):
+            missing.append(var)
+    if missing:
+        logger.error(f"Missing environment variables: {', '.join(missing)}")
+        sys.exit(1)
 
 # Initialize a GLPI session and get the session token
 def init_glpi_session():
@@ -29,13 +42,13 @@ def init_glpi_session():
             "Content-Type": "application/json",
             "App-Token": GLPI_APP_TOKEN
         }
-        response = requests.get(f"{GLPI_API_URL}/initSession", headers=headers, auth=(GLPI_USERNAME, GLPI_PASSWORD))
-        if response.status_code == 200:
-            session_token = response.json().get("session_token")
+        resp = requests.get(f"{GLPI_API_URL}/initSession", headers=headers, auth=(GLPI_USERNAME, GLPI_PASSWORD), timeout=10)
+        if resp.status_code == 200:
+            session_token = resp.json().get("session_token")
             logger.info("GLPI session initialized successfully")
             return session_token
         else:
-            logger.error(f"Error initializing session: {response.status_code}, {response.text}")
+            logger.error(f"Error initializing session: {resp.status_code}, {resp.text}")
             return None
     except Exception as e:
         logger.error(f"Error initializing session: {e}")
@@ -49,15 +62,11 @@ def kill_glpi_session(session_token):
             "Content-Type": "application/json",
             "App-Token": GLPI_APP_TOKEN
         }
-        response = requests.get(f"{GLPI_API_URL}/killSession", headers=headers)
-        if response.status_code == 200:
-            logger.info("GLPI session terminated successfully")
-        else:
-            logger.error(f"Error terminating session: {response.status_code}, {response.text}")
+        requests.get(f"{GLPI_API_URL}/killSession", headers=headers, timeout=5)
+        logger.info("GLPI session terminated successfully")
     except Exception as e:
         logger.error(f"Error terminating session: {e}")
 
-# Fetch tickets from GLPI asynchronously
 async def fetch_glpi_tickets(session_token):
     try:
         headers = {
@@ -65,7 +74,7 @@ async def fetch_glpi_tickets(session_token):
             "Content-Type": "application/json",
             "App-Token": GLPI_APP_TOKEN,
         }
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=20)) as session:
             async with session.get(f"{GLPI_API_URL}/Ticket", headers=headers) as response:
                 if response.status in (200, 206):
                     data = await response.json()
@@ -73,9 +82,11 @@ async def fetch_glpi_tickets(session_token):
                         tickets = data
                     else:
                         tickets = data.get("data", [])
-
                     logger.info(f"Retrieved {len(tickets)} tickets from GLPI")
                     return tickets
+                elif response.status == 401:  # Session expired/invalid
+                    logger.warning("GLPI session expired, need to re-authenticate")
+                    return None
                 else:
                     error_text = await response.text()
                     logger.error(
@@ -86,11 +97,10 @@ async def fetch_glpi_tickets(session_token):
         logger.error(f"Error fetching tickets: {e}")
         return []
 
-# Send a message to a Matrix room
 async def send_matrix_message(message):
     try:
-        async with aiohttp.ClientSession() as session:
-            txn_id = int(time.time() * 1000)  # Transaction ID based on the timestamp
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            txn_id = int(time.time() * 1000)
             url = f"{MATRIX_HOMESERVER}/_matrix/client/v3/rooms/{ROOM_ID}/send/m.room.message/{txn_id}"
             headers = {
                 "Authorization": f"Bearer {MATRIX_TOKEN}",
@@ -100,9 +110,8 @@ async def send_matrix_message(message):
                 "msgtype": "m.text",
                 "body": message
             }
-            
             async with session.put(url, headers=headers, json=payload) as response:
-                if response.status == 200:
+                if response.status in (200, 201):
                     logger.info(f"Message sent: {message}")
                     return True
                 else:
@@ -113,7 +122,6 @@ async def send_matrix_message(message):
         logger.error(f"Error sending Matrix message: {e}")
         return False
 
-# Monitor ticket changes
 async def monitor_glpi_tickets():
     session_token = init_glpi_session()
     if not session_token:
@@ -121,30 +129,54 @@ async def monitor_glpi_tickets():
         return
 
     previous_tickets = set()
-    try:
-        while True:
-            tickets = await fetch_glpi_tickets(session_token)
-            if tickets:
-                current_tickets = set(ticket['id'] for ticket in tickets)
+    error_count = 0
+    max_errors = 5
 
-                # Detect new tickets
+    while True:
+        try:
+            tickets = await fetch_glpi_tickets(session_token)
+            if tickets is None:
+                # Session probably expired, try to re-authenticate
+                logger.info("Re-initializing GLPI session.")
+                kill_glpi_session(session_token)
+                session_token = init_glpi_session()
+                if not session_token:
+                    logger.error("Failed to re-initialize session. Stopping.")
+                    break
+                continue
+            if tickets:
+                # Normalize ticket IDs as string
+                current_tickets = set(str(ticket['id']) for ticket in tickets if 'id' in ticket)
                 new_tickets = current_tickets - previous_tickets
                 for ticket_id in new_tickets:
-                    ticket_info = next((t for t in tickets if t['id'] == ticket_id), None)
+                    ticket_info = next((t for t in tickets if str(t.get('id')) == ticket_id), None)
                     if ticket_info:
                         message = f"{MESSAGE} {ticket_info.get('name', 'No name')} (ID: {ticket_id})"
                         await send_matrix_message(message)
-
                 previous_tickets = current_tickets
+            error_count = 0  # Reset error count on success
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            logger.info("Ticket monitoring stopped.")
+            break
+        except Exception as e:
+            logger.error(f"Error in monitoring loop: {e}")
+            error_count += 1
+            if error_count >= max_errors:
+                logger.error("Too many consecutive errors, stopping monitor.")
+                break
+            await asyncio.sleep(20)  # Wait longer after an error
+    kill_glpi_session(session_token)
 
-            await asyncio.sleep(60)  # Check every minute
-    except asyncio.CancelledError:
-        logger.info("Ticket monitoring stopped.")
-    finally:
-        kill_glpi_session(session_token)
+def handle_exit(signum, frame):
+    logger.info("Received exit signal, shutting down...")
+    sys.exit(0)
 
-# Start monitoring tickets
 async def main():
+    check_env()
+    # Handle signals for graceful shutdown
+    signal.signal(signal.SIGINT, handle_exit)
+    signal.signal(signal.SIGTERM, handle_exit)
     try:
         await monitor_glpi_tickets()
     except KeyboardInterrupt:
