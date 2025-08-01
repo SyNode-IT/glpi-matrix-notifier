@@ -65,12 +65,10 @@ Runtipi application. Clone the repository (or copy its files) inside the `apps`
 folder of your Runtipi installation and install it using the `runtipi-cli` tool:
 
 ```bash
-sudo git clone https://github.com/SyNode-IT/glpi-matrix-notifier.git \
-    /opt/runtipi/apps/glpi-matrix-notifier
-cd /opt/runtipi/apps/glpi-matrix-notifier
-sudo cp -r runtipi/* .
-cd /opt/runtipi
-sudo ./runtipi-cli app install glpi-matrix-notifier
+cd /tmp && sudo git clone https://github.com/SyNode-IT/glpi-matrix-notifier.git
+sudo mkdir /opt/runtipi/apps/glpi-matrix-notifier
+sudo cp -r /tmp/glpi-matrix-notifier/runtipi/* /opt/runtipi/apps/glpi-matrix-notifier/
+sudo /opt/runtipi/runtipi-cli app install glpi-matrix-notifier
 ```
 
 After installation, configure the environment variables from Tipi's interface
